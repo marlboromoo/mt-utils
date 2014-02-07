@@ -76,16 +76,17 @@ class Bot(object):
     def lottery_reference_url(self):
         """Reference URL for http://amt.vqw.com/event/mtqd/"""
         role_name = self.role_name if self.role_name else 'foo'
-        data = urllib.urlencode({
+        data = {
             'userId' : self.user_id,
             'userName' : self.user_name,
             'serverCode' : self.server_code,
             'roldId' : self.role_id,
             'roleName' : urllib.quote(role_name.encode('utf8'))
-        })
+        }
         if self.month_num == '1':
             data['monthNum'] = self.month_num
             data['monthTime'] = self.month_time
+        data = urllib.urlencode(data)
         return "%s/index.html?%s" % (self.EVENT_URL, data)
 
     def get_csrf_token(self, opener, cookiejar, login_url):
