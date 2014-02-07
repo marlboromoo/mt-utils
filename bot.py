@@ -23,6 +23,7 @@ class Bot(object):
     ACTIVITY_URL = 'http://activity.efun.com/'
 
     PLATFORMS = ['mt', 'mtios']
+    REWARDS = range(1, 8)
 
     def __init__(self):
         self.opener = None
@@ -71,6 +72,11 @@ class Bot(object):
     def lottery_signin_url(self):
         """Singin URL for http://amt.vqw.com/event/mtqd/"""
         return "%s/lottery_registerMT.shtml" % (self.ACTIVITY_URL)
+
+    @property
+    def lottery_award_url(self):
+        """Singin URL for http://amt.vqw.com/event/mtqd/"""
+        return "%s/lottery_drawAwardMT.shtml" % (self.ACTIVITY_URL)
 
     @property
     def lottery_reference_url(self):
@@ -245,6 +251,28 @@ class Bot(object):
             print json_
         print "%s(%s) %s!!" % (self.user_name, self.role_name, json_[0]['message'])
 
+    def get_reward(self, type_):
+        """Get lottery reward."""
+        data = urllib.urlencode({
+            'userid' : self.user_id,
+            'userName' : self.user_name,
+            'roleId' : self.role_id,
+            'type' : type_,
+            'serverCode' : self.server_code,
+            'gameCodeFlag' : self.game_code,
+            'crossdomain' : True,
+        })
+        json_ = bot.jsonp2json(self._open_url(
+            self.lottery_award_url, data, self.lottery_reference_url))
+        if self.debug:
+            print json_
+        print "Reward %s - %s" % (type_, json_[0]['message'])
+
+    def get_rewards(self):
+        """Get all lottery rewards."""
+        for i in self.REWARDS:
+            self.get_reward(i)
+
     def efun_login(self, username, password):
         """Login http://www.efuntw.com/ipad/
 
@@ -279,6 +307,7 @@ if __name__ == '__main__':
     bot.event_login(username, password)
     bot.get_role()
     bot.lottery_signin()
+    bot.get_rewards()
 
     #. sign the other accounts
     for i in range(1,6):
@@ -286,5 +315,6 @@ if __name__ == '__main__':
         bot.event_login("%s%s" % (username, i), password)
         bot.get_role()
         bot.lottery_signin()
+        bot.get_rewards()
 
 
