@@ -53,6 +53,11 @@ class Bot(object):
         return "%s/pcLogin_checkLogin.shtml" % (self.LOGIN_URL)
 
     @property
+    def efun_login_url(self):
+        """Login URL for http://www.efuntw.com/ipad/"""
+        return "%s/pcLogin_login.shtml" % (self.LOGIN_URL)
+
+    @property
     def game_server_url(self):
         """Servers URL for http://amt.vqw.com/event/mtqd/"""
         return "%s/gameServer_findAllServerByGameCodePC.shtml" % (self.GAME_URL)
@@ -70,12 +75,13 @@ class Bot(object):
     @property
     def lottery_reference_url(self):
         """Reference URL for http://amt.vqw.com/event/mtqd/"""
+        role_name = self.role_name if self.role_name else 'foo'
         data = urllib.urlencode({
             'userId' : self.user_id,
             'userName' : self.user_name,
             'serverCode' : self.server_code,
             'roldId' : self.role_id,
-            'roleName' : urllib.quote(self.role_name.encode('utf8'),)
+            'roleName' : urllib.quote(role_name.encode('utf8'))
         })
         if self.month_num == '1':
             data['monthNum'] = self.month_num
@@ -138,7 +144,7 @@ class Bot(object):
             data['csrfmiddlewaretoken'] = token
         return opener.open(url, data).read()
 
-    def login(self, username, password):
+    def event_login(self, username, password):
         """Login http://amt.vqw.com/event/mtqd/
 
         :username: username
@@ -236,23 +242,47 @@ class Bot(object):
             self.lottery_signin_url, data, self.lottery_reference_url))
         if self.debug:
             print json_
-        print "%s(%s) %s!!" % (self.role_name, self.user_name, json_[0]['message'])
+        print "%s(%s) %s!!" % (self.user_name, self.role_name, json_[0]['message'])
+
+    def efun_login(self, username, password):
+        """Login http://www.efuntw.com/ipad/
+
+        :username: username
+        :password: password
+
+        """
+        data = urllib.urlencode({
+            'loginName' : username,
+            'loginPwd' : password,
+            'gameCode' : 'platForm',
+        })
+        json_ = bot.jsonp2json(self._open_url(self.efun_login_url, data))
+        try:
+            if json_[0]['code'] == '1000':
+                print "%s %s" % (username, json_[0]['message'])
+        except Exception, e:
+            print "Login fail - %s" % (e)
+        if self.debug:
+            print json_
 
 if __name__ == '__main__':
     bot = Bot()
     username, password = bot.get_login_info()
+
     bot.get_servers()
     bot.select_server_by_code('5401')
     #bot.select_server_by_name(u'雷霆之崖')
 
     #. sign the main account
-    bot.login(username, password)
+    bot.efun_login(username, password)
+    bot.event_login(username, password)
     bot.get_role()
     bot.lottery_signin()
 
     #. sign the other accounts
     for i in range(1,6):
-        bot.login("%s%s" % (username, i), password)
+        bot.efun_login("%s%s" % (username, i), password)
+        bot.event_login("%s%s" % (username, i), password)
         bot.get_role()
         bot.lottery_signin()
 
