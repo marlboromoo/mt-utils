@@ -24,6 +24,29 @@ class Bot(object):
 
     PLATFORMS = ['mt', 'mtios']
     REWARDS = range(1, 8)
+    SLOT_MACHINE_REWARDS = {
+        "yjzsmzs" : u"魅子Online神秘鑽石禮包",
+        "fnmzs" : u"三國急攻防鑽石禮包",
+        "ahzs" : u"重裝武士鑽石禮包",
+        "lsjzs" : u"邪王傳鑽石禮包",
+        "mtzs" : u"我叫MT鑽石禮包",
+	"qjzs" : u"秦姬鑽石禮包",
+        "gwlmzs" : u"怪物聯盟鑽石禮包",
+        "bmhkzs" : u"彈彈島鑽石禮包",
+        "yjzsmhj" : u"魅子Online神秘黃金禮包",
+        "fnmhj" : u"三國急攻防黃金禮包",
+	"ahhj" : u"重裝武士黃金禮包",
+        "mkhxhj" : u"摩卡幻想黃金禮包",
+        "sdxlzs" : u"神雕俠侶鑽石禮包",
+        "sdxlhj" : u"神雕俠侶黃金禮包",
+        "mkhxzs" : u"魔卡幻想鑽石禮包",
+	"lsjhj" : u"亂世決黃金禮包",
+        "mthj" : u"我叫MT黃金禮包",
+        "qjhj" : u"秦姬黃金禮包",
+        "gwlmhj" : u"怪物聯盟黃金禮包",
+        "bmhkhj" : u"彈彈島黃金禮包",
+	"anweijiang" : u"沒有中獎哦！請明天再來吧！"
+    }
 
     def __init__(self):
         self.opener = None
@@ -57,6 +80,21 @@ class Bot(object):
     def efun_login_url(self):
         """Login URL for http://www.efuntw.com/ipad/"""
         return "%s/pcLogin_login.shtml" % (self.LOGIN_URL)
+
+    @property
+    def slot_machine_pull_url(self):
+        """Slot machine trigger URL for http://www.efuntw.com/ipad/"""
+        return "%s/lottery_tigerEngineLottery.shtml" % (self.ACTIVITY_URL)
+
+    @property
+    def slot_machine_record_url(self):
+        """Slot machine record URL for http://www.efuntw.com/ipad/"""
+        return "%s/lottery_findTigerEngineLotteryRecord.shtml" % (self.ACTIVITY_URL)
+
+    @property
+    def slot_machine_reference_url(self):
+        """Slot machine reference URL for http://www.efuntw.com/ipad/"""
+        return "http://www.efuntw.com/ipad/ernie_info.html"
 
     @property
     def game_server_url(self):
@@ -288,9 +326,50 @@ class Bot(object):
         json_ = bot.jsonp2json(self._open_url(self.efun_login_url, data))
         try:
             if json_[0]['code'] == '1000':
+                self.user_name = username
+                self.user_id = json_[0]['userid']
                 print "%s %s" % (username, json_[0]['message'])
         except Exception, e:
             print "Login fail - %s" % (e)
+        if self.debug:
+            print json_
+
+    def slot_machine(self):
+        """@todo: Docstring for efun_slot_machine.
+
+        :returns: @todo
+
+        """
+        data = urllib.urlencode({
+            'userid' : self.user_id,
+            'userName' : self.user_name,
+            'crossdomain' : 'true',
+        })
+        #. start the machine
+        json_ = bot.jsonp2json(self._open_url(
+            self.slot_machine_pull_url, data, self.slot_machine_reference_url))
+        try:
+            print "Slot machine start: %s" % json_[0]['message']
+        except Exception, e:
+            print "Fail to start the slot machine: %s" % (e)
+        if self.debug:
+            print json_
+        #. get reward
+        json_ = bot.jsonp2json(self._open_url(
+            self.slot_machine_record_url,
+            data,
+            self.slot_machine_reference_url))
+        try:
+            sn = 'serial'
+            reward = self.SLOT_MACHINE_REWARDS[json_[0]['reward']]
+            if json_[0].has_key(sn):
+                print "Slot machine reward: %s(%s)" % (json_[0][sn], reward)
+            else:
+                print "Slot machine reward: %s" % (reward)
+        except Exception, e:
+            msg = json_[0].get('message')
+            msg = msg if msg else e
+            print "Fail to get the slot machine reward: %s" % (msg)
         if self.debug:
             print json_
 
@@ -298,12 +377,14 @@ if __name__ == '__main__':
     bot = Bot()
     username, password = bot.get_login_info()
 
+    #bot.debug = True
     bot.get_servers()
     bot.select_server_by_code('5401')
     #bot.select_server_by_name(u'雷霆之崖')
 
     #. sign the main account
     bot.efun_login(username, password)
+    bot.slot_machine()
     bot.event_login(username, password)
     bot.get_role()
     bot.lottery_signin()
@@ -312,6 +393,7 @@ if __name__ == '__main__':
     #. sign the other accounts
     for i in range(1,6):
         bot.efun_login("%s%s" % (username, i), password)
+        bot.slot_machine()
         bot.event_login("%s%s" % (username, i), password)
         bot.get_role()
         bot.lottery_signin()
