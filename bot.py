@@ -7,6 +7,9 @@ import cookielib
 import json
 import getpass
 #from docopt import docopt
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Bot(object):
     """Signin bot for I'm MT (traditional chinese)
@@ -48,9 +51,13 @@ class Bot(object):
 	"anweijiang" : u"沒有中獎哦！請明天再來吧！"
     }
 
-    def __init__(self):
+    def __init__(self, log='/tmp/mt-bot.log', debug=False):
         self.opener = None
-        self.debug = None
+
+        #. logger
+        format = "%(asctime)s %(levelname)s: %(message)s"
+        level = logging.DEBUG if debug else logging.INFO
+        logging.basicConfig(filename=log, level=level, format=format)
 
         #. account
         self.user_name = None
@@ -133,6 +140,11 @@ class Bot(object):
         data = urllib.urlencode(data)
         return "%s/index.html?%s" % (self.EVENT_URL, data)
 
+    def _stdlog(self, msg):
+        """Log & print the message."""
+        print msg
+        logger.info(msg)
+
     def get_csrf_token(self, opener, cookiejar, login_url):
         """
         get csrf token from cookie
@@ -206,9 +218,9 @@ class Bot(object):
                 self.user_id  = json_[0]['userId']
                 self.user_name = json_[0]['username']
         except Exception, e:
-            print "Login fail - %s" % (e)
-        if self.debug:
-            print self.user_id, self.user_name
+            msg =  "Login fail - %s" % (e)
+            self._stdlog(msg)
+        logger.debug(self.user_id, self.user_name)
 
     def _get_servers(self, code):
         data = urllib.urlencode({
@@ -219,14 +231,14 @@ class Bot(object):
             for i in json_[0]['ServerList']:
                 self.servers[code][i.get('ServerCode')] = i.get('ServerName')
         except Exception, e:
-            print "Fail to get servers - %s" % (e)
+            msg =  "Fail to get servers - %s" % (e)
+            self._stdlog(msg)
 
     def get_servers(self):
         """Get server infos """
         for i in self.PLATFORMS:
             self._get_servers(i)
-        if self.debug:
-            print self.servers
+        logger.debug(self.servers)
 
     def _select_server(self, code=None, name=None):
         """Select server by code/name.
@@ -242,8 +254,7 @@ class Bot(object):
                     self.server_name = v
                     self.game_code = p
                     break
-        if self.debug:
-            print self.server_code, self.server_name, self.game_code
+        logger.debug(self.server_code, self.server_name, self.game_code)
 
     def select_server_by_code(self, code):
         """Select server by code."""
@@ -270,9 +281,9 @@ class Bot(object):
             self.month_num = json_.get('MonthNum')
             self.month_time = json_.get('MonthTime')
         except Exception, e:
-            print "Fail to get role - %s" % (e)
-        if self.debug:
-            print self.role_name, self.role_id, self.level, self.month_num, self.month_time
+            msg =  "Fail to get role - %s" % (e)
+            self._stdlog(msg)
+        logger.debug(self.role_name, self.role_id, self.level, self.month_num, self.month_time)
 
     def lottery_signin(self):
         """Lottery sign-in."""
@@ -285,9 +296,9 @@ class Bot(object):
         })
         json_ = bot.jsonp2json(self._open_url(
             self.lottery_signin_url, data, self.lottery_reference_url))
-        if self.debug:
-            print json_
-        print "%s(%s) %s!!" % (self.user_name, self.role_name, json_[0]['message'])
+        logger.debug(json_)
+        msg =  "%s(%s) %s!!" % (self.user_name, self.role_name, json_[0]['message'])
+        self._stdlog(msg)
 
     def get_reward(self, type_):
         """Get lottery reward."""
@@ -302,9 +313,9 @@ class Bot(object):
         })
         json_ = bot.jsonp2json(self._open_url(
             self.lottery_award_url, data, self.lottery_reference_url))
-        if self.debug:
-            print json_
-        print "Reward %s - %s" % (type_, json_[0]['message'])
+        logger.debug(json_)
+        msg =  "Reward %s - %s" % (type_, json_[0]['message'])
+        self._stdlog(msg)
 
     def get_rewards(self):
         """Get all lottery rewards."""
@@ -328,11 +339,12 @@ class Bot(object):
             if json_[0]['code'] == '1000':
                 self.user_name = username
                 self.user_id = json_[0]['userid']
-                print "%s %s" % (username, json_[0]['message'])
+                msg =  "%s %s" % (username, json_[0]['message'])
+                self._stdlog(msg)
         except Exception, e:
-            print "Login fail - %s" % (e)
-        if self.debug:
-            print json_
+            msg = "Login fail - %s" % (e)
+            self._stdlog(msg)
+        logger.debug(json_)
 
     def slot_machine(self):
         """@todo: Docstring for efun_slot_machine.
@@ -349,11 +361,12 @@ class Bot(object):
         json_ = bot.jsonp2json(self._open_url(
             self.slot_machine_pull_url, data, self.slot_machine_reference_url))
         try:
-            print "Slot machine start: %s" % json_[0]['message']
+            msg = "Slot machine start: %s" % json_[0]['message']
+            self._stdlog(msg)
         except Exception, e:
-            print "Fail to start the slot machine: %s" % (e)
-        if self.debug:
-            print json_
+            msg =  "Fail to start the slot machine: %s" % (e)
+            self._stdlog(msg)
+        logger.debug(json_)
         #. get reward
         json_ = bot.jsonp2json(self._open_url(
             self.slot_machine_record_url,
@@ -363,15 +376,17 @@ class Bot(object):
             sn = 'serial'
             reward = self.SLOT_MACHINE_REWARDS[json_[0]['reward']]
             if json_[0].has_key(sn):
-                print "Slot machine reward: %s(%s)" % (json_[0][sn], reward)
+                msg = "Slot machine reward: %s(%s)" % (json_[0][sn], reward)
+                self._stdlog(msg)
             else:
-                print "Slot machine reward: %s" % (reward)
+                msg = "Slot machine reward: %s" % (reward)
+                self._stdlog(msg)
         except Exception, e:
             msg = json_[0].get('message')
             msg = msg if msg else e
-            print "Fail to get the slot machine reward: %s" % (msg)
-        if self.debug:
-            print json_
+            msg = "Fail to get the slot machine reward: %s" % (msg)
+            self._stdlog(msg)
+        logger.debug(json_)
 
 if __name__ == '__main__':
     bot = Bot()
