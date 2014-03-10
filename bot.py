@@ -28,7 +28,7 @@ class Bot(object):
     PLATFORMS = ['mt', 'mtios']
     REWARDS = range(1, 8)
     SLOT_MACHINE_REWARDS = {
-        "yjzsmzs" : u"魅子Online神秘鑽石禮包",
+        "yjzsmzs2" : u"魅子Online神秘鑽石禮包",
         "fnmzs" : u"三國急攻防鑽石禮包",
         "ahzs" : u"重裝武士鑽石禮包",
         "lsjzs" : u"邪王傳鑽石禮包",
@@ -36,7 +36,7 @@ class Bot(object):
 	"qjzs" : u"秦姬鑽石禮包",
         "gwlmzs" : u"怪物聯盟鑽石禮包",
         "bmhkzs" : u"彈彈島鑽石禮包",
-        "yjzsmhj" : u"魅子Online神秘黃金禮包",
+        "yjzsmhj2" : u"魅子Online神秘黃金禮包",
         "fnmhj" : u"三國急攻防黃金禮包",
 	"ahhj" : u"重裝武士黃金禮包",
         "mkhxhj" : u"摩卡幻想黃金禮包",
@@ -44,7 +44,7 @@ class Bot(object):
         "sdxlhj" : u"神雕俠侶黃金禮包",
         "mkhxzs" : u"魔卡幻想鑽石禮包",
 	"lsjhj" : u"亂世決黃金禮包",
-        "mthj" : u"我叫MT黃金禮包",
+        "mthj2" : u"我叫MT黃金禮包",
         "qjhj" : u"秦姬黃金禮包",
         "gwlmhj" : u"怪物聯盟黃金禮包",
         "bmhkhj" : u"彈彈島黃金禮包",
