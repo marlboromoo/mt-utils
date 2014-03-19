@@ -170,8 +170,11 @@ class Bot(object):
         :jsonp: JSONP string
         :returns: JSON string
         """
-        json_ = jsonp[ jsonp.index("(")+1 : jsonp.rindex(")") ]
-        json_ = json.loads(json_)
+        if len(jsonp) > 0:
+            json_ = jsonp[ jsonp.index("(")+1 : jsonp.rindex(")") ]
+            json_ = json.loads(json_)
+        else:
+            json_ = None
         return json_
 
     def _make_opener(self, ref_url):
@@ -314,8 +317,9 @@ class Bot(object):
         json_ = bot.jsonp2json(self._open_url(
             self.lottery_award_url, data, self.lottery_reference_url))
         logger.debug(json_)
-        msg =  "Reward %s - %s" % (type_, json_[0]['message'])
-        self._stdlog(msg)
+        if json_:
+            msg =  "Reward %s - %s" % (type_, json_[0]['message'])
+            self._stdlog(msg)
 
     def get_rewards(self):
         """Get all lottery rewards."""
